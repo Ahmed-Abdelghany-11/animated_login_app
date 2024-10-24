@@ -170,6 +170,7 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ),
                       focusNode: passwordFocusNode,
+                      onTap: checkForPasswordFocusNodeToChangeAnimationState,
                       validator: (value) =>
                           value != testPassword ? "Wrong password" : null,
                     ),
