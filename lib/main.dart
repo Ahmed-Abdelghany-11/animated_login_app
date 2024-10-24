@@ -1,125 +1,209 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:login/animation_enum.dart';
+import 'package:rive/rive.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Artboard? myArtboard;
+  late RiveAnimationController controllerIdle;
+  late RiveAnimationController controllerSuccess;
+  late RiveAnimationController controllerFail;
+  late RiveAnimationController controllerHandsUp;
+  late RiveAnimationController controllerHandsDown;
+  late RiveAnimationController controllerLookDownRight;
+  late RiveAnimationController controllerLookDownLeft;
+  late RiveAnimationController controllerLookIdle;
+
+  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final passwordFocusNode = FocusNode();
+
+  String testEmail = "ahmed@gmail.com";
+  String testPassword = "123456";
+  bool isLookingRight = false;
+  bool isLookingLeft = false;
+  
+
+  void removeAllControllers() {
+    myArtboard?.artboard.removeController(controllerIdle);
+    myArtboard?.artboard.removeController(controllerHandsUp);
+    myArtboard?.artboard.removeController(controllerHandsDown);
+    myArtboard?.artboard.removeController(controllerLookDownLeft);
+    myArtboard?.artboard.removeController(controllerLookDownLeft);
+    myArtboard?.artboard.removeController(controllerSuccess);
+    myArtboard?.artboard.removeController(controllerFail);
+    isLookingLeft = false;
+    isLookingRight = false;
+  }
+
+  void addSpecifcAnimationAction(
+      RiveAnimationController<dynamic> neededAnimationAction) {
+    removeAllControllers();
+    myArtboard?.artboard.addController(neededAnimationAction);
+  }
+
+  @override
+  void dispose() {
+    passwordFocusNode.removeListener;
+    super.dispose();
+  }
+
+
+  
+
+ 
+
+
+  @override
+  void initState() {
+    super.initState();
+    controllerIdle = SimpleAnimation(AnimationEnum.idle.name);
+    controllerSuccess = SimpleAnimation(AnimationEnum.success.name);
+    controllerFail = SimpleAnimation(AnimationEnum.fail.name);
+    controllerHandsUp = SimpleAnimation(AnimationEnum.Hands_up.name);
+    controllerHandsDown = SimpleAnimation(AnimationEnum.hands_down.name);
+    controllerLookDownRight =
+        SimpleAnimation(AnimationEnum.Look_down_right.name);
+    controllerLookDownLeft = SimpleAnimation(AnimationEnum.Look_down_left.name);
+    controllerLookIdle = SimpleAnimation(AnimationEnum.look_idle.name);
+
+    rootBundle.load('assets/animated_login.riv').then(
+      (data) async {
+        final file = RiveFile.import(data);
+        final artboard = file.mainArtboard;
+        artboard.addController(controllerIdle);
+        setState(() => myArtboard = artboard);
+      },
     );
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+   void checkForPasswordFocusNodeToChangeAnimationState() {
+    passwordFocusNode.addListener(() {
+      if (passwordFocusNode.hasFocus) {
+        addSpecifcAnimationAction(controllerHandsUp);
+      } else if (!passwordFocusNode.hasFocus) {
+        addSpecifcAnimationAction(controllerHandsDown);
+      }
+    });
+  }
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+   void validateEmailAndPassword() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (formKey.currentState!.validate()) {
+        addSpecifcAnimationAction(controllerSuccess);
+      } else {
+        addSpecifcAnimationAction(controllerFail);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    return MaterialApp(
+      home: Scaffold(
+        backgroundColor: const Color(0xffC2DBE1),
+        appBar: AppBar(
+          title: const Text('Animated Login',
+              style: TextStyle(color: Colors.white)),
+          centerTitle: true,
+          backgroundColor: Colors.blue,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height / 3,
+                child: myArtboard == null
+                    ? const SizedBox.shrink()
+                    : Rive(
+                        artboard: myArtboard!,
+                      ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height / 50,
+              ),
+              Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25.0),
+                        ),
+                      ),
+                      validator: (value) =>
+                          value != testEmail ? "Wrong email" : null,
+                      onChanged: (value) {
+                        if (value.isNotEmpty &&
+                            value.length < 16 &&
+                            !isLookingLeft) {
+                          addSpecifcAnimationAction(controllerLookDownLeft);
+                        } else if (value.isNotEmpty &&
+                            value.length > 16 &&
+                            !isLookingRight) {
+                          addSpecifcAnimationAction(controllerLookDownRight);
+                        }
+                      },
+                    ),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height / 25,
+                    ),
+                    TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25.0),
+                        ),
+                      ),
+                      focusNode: passwordFocusNode,
+                      validator: (value) =>
+                          value != testPassword ? "Wrong password" : null,
+                    ),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height / 18,
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width / 8,
+                      ),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          shape: const StadiumBorder(),
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () {
+                          passwordFocusNode.unfocus();
+                          validateEmailAndPassword();
+                        },
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(fontSize: 20, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
